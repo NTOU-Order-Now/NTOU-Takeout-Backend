@@ -27,9 +27,6 @@ public class CustomerController {
             @PathVariable("customerId") String customerId) {
         try {
             Order cartOrder = orderService.getCart(customerId);
-            if(cartOrder == null) {
-                cartOrder = orderService.createCart(customerId);
-            }
             log.info("Customer get cart successfully");
             return ResponseEntity.status(HttpStatus.OK).body(cartOrder);
         } catch (Exception e) {
@@ -56,8 +53,13 @@ public class CustomerController {
             @PathVariable("customerId") String customerId,
             @RequestBody OrderedDish dish) throws Exception {
 
-        Order cartOrder = orderService.addNewDish(customerId, dish);
-        return ResponseEntity.status(HttpStatus.OK).body(cartOrder);
+        try {
+            Order cartOrder = orderService.addNewDish(customerId, dish);
+            return ResponseEntity.status(HttpStatus.OK).body(cartOrder);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PatchMapping("/{customerId}/cart/dishes/{dishId}")
@@ -65,6 +67,7 @@ public class CustomerController {
             @PathVariable("customerId") String customerId,
             @PathVariable("dishId") String dishId,
             @RequestBody OrderedDishPatchRequest request) throws Exception {
+        log.info("updateDish started");
         try {
             Order cartOrder = orderService.updateDish(customerId, dishId, request);
             log.info("Customer update dish successfully");
@@ -87,11 +90,11 @@ public class CustomerController {
         }
     }
 
-    @PatchMapping("/{customerId}/cart/cancel")
+    @PatchMapping("/cart/{orderId}/cancel")
     public ResponseEntity<String> cancelDish(
-            @PathVariable("customerId") String customerId) throws Exception {
+            @PathVariable("orderId") String orderId) throws Exception {
         try {
-            orderService.cancelOrder(customerId);
+            orderService.cancelOrder(orderId);
             return ResponseEntity.status(HttpStatus.OK).body("Success");
         } catch (Exception e) {
             log.error(e.getMessage());
